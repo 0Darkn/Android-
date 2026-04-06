@@ -452,6 +452,332 @@ Login + base de dados
 Comunicação em tempo real
 
 
-# projeto Android completo" 🚀
 ---
 
+Perfeito — vamos montar um projeto Android completo em Python com:
+
+✅ Interface (Kivy)
+✅ Login
+✅ Comunicação com servidor
+✅ Base de dados (SQLite)
+✅ API (Flask)
+✅ Estrutura profissional
+✅ Comentários passo a passo
+
+
+---
+
+📱 PROJETO: App Android + Servidor Flask
+
+🧠 Arquitetura
+
+ANDROID APP (Kivy)
+        ↓ HTTP (JSON)
+SERVIDOR (Flask API)
+        ↓
+BASE DE DADOS (SQLite)
+
+
+---
+
+📂 Estrutura do Projeto
+
+projeto/
+├── server/
+│   ├── app.py
+│   └── database.db
+│
+├── android_app/
+│   ├── main.py
+│   ├── api.py
+│   └── buildozer.spec
+
+
+---
+
+🌐 1. SERVIDOR (Flask + SQLite)
+
+📄 server/app.py
+
+from flask import Flask, request, jsonify
+import sqlite3
+
+app = Flask(__name__)
+
+# ==============================
+# Criar base de dados
+# ==============================
+def init_db():
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    # Cria tabela users
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        password TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ==============================
+# REGISTO
+# ==============================
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.json
+
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+                   (data["username"], data["password"]))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "ok"})
+
+# ==============================
+# LOGIN
+# ==============================
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE username=? AND password=?",
+                   (data["username"], data["password"]))
+
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"status": "erro"})
+
+# ==============================
+# RUN
+# ==============================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
+
+---
+
+📡 2. CLIENTE ANDROID (API)
+
+📄 android_app/api.py
+
+import requests
+
+# URL do servidor (IMPORTANTE: mudar para IP do PC)
+BASE_URL = "http://192.168.1.100:5000"
+
+def login(username, password):
+    response = requests.post(
+        f"{BASE_URL}/login",
+        json={"username": username, "password": password}
+    )
+    return response.json()
+
+def register(username, password):
+    response = requests.post(
+        f"{BASE_URL}/register",
+        json={"username": username, "password": password}
+    )
+    return response.json()
+
+
+---
+
+📱 3. APP ANDROID (Kivy)
+
+📄 android_app/main.py
+
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+
+import api
+
+
+class LoginLayout(BoxLayout):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.orientation = "vertical"
+
+        # ==========================
+        # Campo username
+        # ==========================
+        self.user = TextInput(hint_text="Username")
+        self.add_widget(self.user)
+
+        # ==========================
+        # Campo password
+        # ==========================
+        self.passw = TextInput(hint_text="Password", password=True)
+        self.add_widget(self.passw)
+
+        # ==========================
+        # Label resultado
+        # ==========================
+        self.result = Label(text="")
+        self.add_widget(self.result)
+
+        # ==========================
+        # Botão login
+        # ==========================
+        btn_login = Button(text="Login")
+        btn_login.bind(on_press=self.fazer_login)
+        self.add_widget(btn_login)
+
+        # ==========================
+        # Botão registar
+        # ==========================
+        btn_reg = Button(text="Registar")
+        btn_reg.bind(on_press=self.fazer_registo)
+        self.add_widget(btn_reg)
+
+    # ==========================
+    # LOGIN
+    # ==========================
+    def fazer_login(self, instance):
+        r = api.login(self.user.text, self.passw.text)
+
+        if r["status"] == "ok":
+            self.result.text = "Login OK ✅"
+        else:
+            self.result.text = "Erro ❌"
+
+    # ==========================
+    # REGISTO
+    # ==========================
+    def fazer_registo(self, instance):
+        r = api.register(self.user.text, self.passw.text)
+        self.result.text = "Registado ✅"
+
+
+class MinhaApp(App):
+    def build(self):
+        return LoginLayout()
+
+
+if __name__ == "__main__":
+    MinhaApp().run()
+
+
+---
+
+⚙️ 4. Buildozer (Android)
+
+📄 buildozer.spec
+
+title = MeuApp
+package.name = meuapp
+package.domain = org.meuapp
+
+requirements = python3,kivy,requests
+
+android.permissions = INTERNET
+
+
+---
+
+🚀 5. Como executar
+
+🖥️ Servidor
+
+cd server
+python app.py
+
+
+---
+
+📱 Android
+
+cd android_app
+buildozer android debug
+buildozer android deploy run
+
+
+---
+
+🔥 6. Melhorias (próximo nível)
+
+Posso evoluir isto para:
+
+🔐 Segurança
+
+Password hash (bcrypt)
+
+Tokens JWT
+
+
+📡 Tempo real
+
+WebSockets
+
+
+🎮 Interface avançada
+
+Menus
+
+Tabs
+
+Navegação entre páginas
+
+
+🤖 Integração com teus projetos
+
+Arduino / Raspberry Pi
+
+Controlo remoto robô
+
+Streaming vídeo
+
+AI + RAG local
+
+
+
+---
+
+❗ IMPORTANTE
+
+👉 No api.py muda:
+
+BASE_URL = "http://TEU_IP:5000"
+
+Exemplo:
+
+192.168.1.100
+
+
+---
+
+# upgrade
+
+Posso já fazer versão profissional com:
+
+Login JWT 🔐
+
+Base de dados avançada
+
+Interface tipo app real (menus + páginas)
+
+Comunicação em tempo real
+
+
+👉 versão profissional 🚀
